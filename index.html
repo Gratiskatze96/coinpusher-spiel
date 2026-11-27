@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Coin Pusher</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #BFE3FF; }
+    #unity-canvas { width: 100%; height: 100%; display: block; background: #BFE3FF; touch-action: none; }
+    #loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+               font: 600 20px system-ui, sans-serif; color: #2A2C45; gap: 14px; }
+    #bar { width: 60%; height: 12px; background: #fff; border-radius: 6px; overflow: hidden; }
+    #fill { width: 0; height: 100%; background: #FF8C42; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="loading">Loading Coin Pusher …<div id="bar"><div id="fill"></div></div></div>
+  <script>
+    // GitHub Pages lässt Browser Dateien 10 Minuten zwischenspeichern (Flo, 17.11.2026: sah nach einem Update noch die alte
+    // Fassung). version.txt wird darum immer frisch geholt, alle Spieldateien bekommen die Versionsnummer angehängt.
+    function load(src) {
+      return new Promise((ok, fail) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = fail; document.body.appendChild(s); });
+    }
+    fetch("version.txt", { cache: "no-store" }).then(r => r.ok ? r.text() : "").catch(() => "").then(async (v) => {
+    const q = "?v=" + encodeURIComponent((v || "0.1.169").trim());
+    await load("Build/Web.loader.js" + q);
+    // Volle Bildschirmgröße im Hochformat in voller Handy-Auflösung (höchstens dreifach), sonst wird das Bild weich
+    createUnityInstance(document.querySelector("#unity-canvas"), {
+      dataUrl: "Build/Web.data.unityweb" + q,
+      frameworkUrl: "Build/Web.framework.js.unityweb" + q,
+      codeUrl: "Build/Web.wasm.unityweb" + q,
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "Gratiskatze96",
+      productName: "Coin Pusher",
+      productVersion: "0.1.169",
+      matchWebGLToCanvasSize: true,
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 3),
+    }, (progress) => {
+      document.querySelector("#fill").style.width = Math.round(progress * 100) + "%";
+    }).then((instance) => {
+      window.coinPusher = instance;   // zum Testen: coinPusher.SendMessage("Spiel", "Toggle") öffnet das Debugmenü
+      document.querySelector("#loading").remove();
+    }).catch((message) => alert(message));
+    });
+  </script>
+</body>
+</html>
